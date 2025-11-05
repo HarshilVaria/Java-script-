@@ -1,56 +1,63 @@
-// Select elements
 const noteInput = document.querySelector("#noteInput");
 const addNoteBtn = document.querySelector("#addNoteBtn");
 const notesList = document.querySelector("#notesList");
 
-// Load notes from localStorage
 let notes = JSON.parse(localStorage.getItem("notes")) || [];
 
-// Display notes on load
-displayNotes();
+document.addEventListener("DOMContentLoaded", displayNotes);
 
-// Add note event
-addNoteBtn.addEventListener("click", () => {
-  const noteText = noteInput.value.trim();
-  if (noteText === "") {
-    alert("❌ Please enter a note!");
-    return;
-  }
-
-  // Add to array
-  notes.push(noteText);
-
-  // Save to localStorage
-  saveNotes();
-
-  // Display updated notes
-  displayNotes();
-
-  // Clear input
-  noteInput.value = "";
+addNoteBtn.addEventListener("click", addNote);
+noteInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") addNote();
 });
 
-// Function to display notes
+function addNote() {
+  const noteText = noteInput.value.trim();
+  if (!noteText) {
+    showAlert("⚠️ Please enter a note!");
+    return;
+  }
+  notes.push(noteText);
+  saveNotes();
+  displayNotes();
+  noteInput.value = "";
+  showAlert("✅ Note added successfully!", "success");
+}
+
 function displayNotes() {
-  notesList.innerHTML = "";
+  notesList.innerHTML = notes.length
+    ? ""
+    : "<p class='empty-msg'>No notes yet. Add one above! ✏️</p>";
   notes.forEach((note, index) => {
     const li = document.createElement("li");
-    li.innerHTML = `
-      <span>${note}</span>
-      <button class="delete-btn" onclick="deleteNote(${index})">Delete</button>
-    `;
+    li.classList.add("note-item");
+    const span = document.createElement("span");
+    span.textContent = note;
+    const deleteBtn = document.createElement("button");
+    deleteBtn.classList.add("delete-btn");
+    deleteBtn.textContent = "🗑 Delete";
+    deleteBtn.addEventListener("click", () => deleteNote(index));
+    li.append(span, deleteBtn);
     notesList.appendChild(li);
   });
 }
 
-// Function to save notes in localStorage
+function deleteNote(index) {
+  if (!confirm("Are you sure you want to delete this note?")) return;
+  notes.splice(index, 1);
+  saveNotes();
+  displayNotes();
+  showAlert("🗑 Note deleted.", "info");
+}
+
 function saveNotes() {
   localStorage.setItem("notes", JSON.stringify(notes));
 }
 
-// Function to delete a note
-function deleteNote(index) {
-  notes.splice(index, 1); // remove from array
-  saveNotes(); // update storage
-  displayNotes(); // refresh UI
+function showAlert(message, type = "error") {
+  const alert = document.createElement("div");
+  alert.className = `toast ${type}`;
+  alert.textContent = message;
+  document.body.appendChild(alert);
+  setTimeout(() => alert.remove(), 2000);
 }
